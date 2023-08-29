@@ -43,7 +43,6 @@ def constrcution(fold_number: int,
                  chunk_preprocessed_dir: str,
                  chunk_mc_dir: str,
                  chunk_mc_binarized_dir: str,
-                 chunk_method: str,
                  carousel_resolution: int,
                  step: int,
                  threads: int,
@@ -53,12 +52,8 @@ def constrcution(fold_number: int,
                  threshold: float,
                  filter_rate: float,
                  neighbors_method: str,
-                 decomposition: str,
                  n_components: int,
-                 svd_solver: str,
-                 random_state: int,
-                 n_iter: int,
-                 kernel: str
+                 svd_solver: str
                  ):
     """
     Identify metacells in scCAS data by EpiCarousel.
@@ -77,8 +72,6 @@ def constrcution(fold_number: int,
         Location of metacells h5ad file storage for the chunk.
     chunk_mc_binarized_dir : str
         Location of the binarized metacells h5ad file storage for the chunk.
-    chunk_method : str
-        The version of TF-IDF transformation to be performed on chunk matrix.
     carousel_resolution : int
         The ratio of the number of original cells to that of metacells.
     step : int
@@ -95,7 +88,7 @@ def constrcution(fold_number: int,
         Threshold for binarizing metacell-by-region matrix.
     filter_rate : float
         Proportion for feature selection.
-    """    """"""        
+    """        
     package_path = resource_filename('epicarousel', "")
     os.chmod(package_path + '/construction.sh', 0o755)
     print(os.getcwd())
@@ -109,7 +102,6 @@ def constrcution(fold_number: int,
               + ' ' + chunk_preprocessed_dir
               + ' ' + chunk_mc_dir
               + ' ' + chunk_mc_binarized_dir
-              + ' ' + chunk_method
               + ' ' + str(carousel_resolution)
               + ' ' + str(step)
               + ' ' + str(threads)
@@ -119,12 +111,8 @@ def constrcution(fold_number: int,
               + ' ' + str(threshold)
               + ' ' + str(filter_rate)
               + ' ' + neighbors_method
-              + ' ' + decomposition
               + ' ' + str(n_components)
               + ' ' + svd_solver
-              + ' ' + str(random_state)
-              + ' ' + str(n_iter)
-              + ' ' + kernel
              )
 
 class Carousel:
@@ -135,26 +123,19 @@ class Carousel:
                  if_bi: int = 1,
                  if_mc_bi: int = 1,
                  threshold: float = 0.0,
-                 filter_cells: bool = False,
                  filter_rate: float = 0.01,
                  chunk_size: int = 10000,
-                 original_method: str = 'tfidf3',
-                 chunk_method: str = 'tfidf3',
-                 carousel_method: str = 'tfidf3',
                  carousel_resolution: int = 10,
                  base: str = '/home/metacell/data/metacell/carousel/output',
-                 shuffle: int = 0,
-                 random_state: int = 1,
                  step: int = 4,
                  threads: int = 8,
-                 index: str = 'cell_type',
                  mc_mode: str = 'average',
+                 index: str = 'cell_type',
                  neighbors_method: str = 'umap',
-                 decomposition: str = 'pca',
                  n_components: int = 50,
                  svd_solver: str = 'arpack',
-                 n_iter: int = 7,
-                 kernel: str = 'linear'
+                 shuffle: int = 0,
+                 random_state: int = 1,
                  ):
         '''
 
@@ -176,29 +157,22 @@ class Carousel:
             mc_mode: Mode of calculating metacell-by-region matrix.
         '''
         self.data_name = data_name
-        self.filter_cells = filter_cells
         self.chunk_size = chunk_size
-        self.original_method = original_method  # 原数据直接聚类的预处理方法
-        self.chunk_method = chunk_method
-        self.metacell_method = carousel_method
         self.carousel_resolution = carousel_resolution
         self.gamma = 1 / carousel_resolution
-        self.if_bi = if_bi  # 原数据是否做二值化
-        self.if_mc_bi = if_mc_bi  # 控制输出的metacell数据是否二值化过
+        self.if_bi = if_bi  
+        self.if_mc_bi = if_mc_bi  
         self.threshold = threshold
         self.random_state = random_state
         self.step = step
-        self.threads = threads  # 并行数
+        self.threads = threads  
         self.shuffle = shuffle
         self.index = index
         self.mc_mode = mc_mode
         self.filter_rate = filter_rate
         self.neighbors_method = neighbors_method
-        self.decomposition = decomposition
         self.n_components = n_components
         self.svd_solver = svd_solver
-        self.n_iter = n_iter
-        self.kernel = kernel
 
         self.adata = None
         self.cells_number = None
@@ -311,7 +285,7 @@ class Carousel:
         print("Finish spliting data.")
 
 #     @profile
-    def metacell_construction(self):
+    def identify_metacells(self):
         """
         Identify metacells.
         """
@@ -321,7 +295,6 @@ class Carousel:
                      chunk_preprocessed_dir=self.chunk_preprocessed_dir,
                      chunk_mc_dir=self.chunk_mc_dir,
                      chunk_mc_binarized_dir=self.chunk_mc_binarized_dir,
-                     chunk_method=self.chunk_method,
                      carousel_resolution=self.carousel_resolution,
                      step=self.step,
                      threads=self.threads,
@@ -331,16 +304,12 @@ class Carousel:
                      threshold=self.threshold,
                      filter_rate=self.filter_rate,
                      neighbors_method=self.neighbors_method,
-                     decomposition=self.decomposition,
                      n_components=self.n_components,
-                     svd_solver=self.svd_solver,
-                     random_state=self.random_state,
-                     n_iter=self.n_iter,
-                     kernel=self.kernel
+                     svd_solver=self.svd_solver
                      )
 
 #     @profile
-    def merge_metacell(self):
+    def merge_metacells(self):
         '''
         Aggregate metacells from each chunk.
         '''
@@ -348,11 +317,11 @@ class Carousel:
         print("Start aggregating metacells.")
         if self.if_mc_bi == 1:
             i = 0
-            self.mc_adata = pp.read(self.chunk_mc_binarized_dir + "/%s_chunk_%s_mc%d_if_bi_%d_if_mc_bi_%d.h5ad" % (
-            self.data_name, self.chunk_method, i + 1, self.if_bi, self.if_mc_bi))
+            self.mc_adata = pp.read(self.chunk_mc_binarized_dir + "/%s_mc%d_if_bi_%d_if_mc_bi_%d.h5ad" % (
+            self.data_name, i + 1, self.if_bi, self.if_mc_bi))
             for i in tqdm(range(1, self.fold_number)):
-                mc_adata = pp.read(self.chunk_mc_binarized_dir + "/%s_chunk_%s_mc%d_if_bi_%d_if_mc_bi_%d.h5ad" % (
-                self.data_name, self.chunk_method, i + 1, self.if_bi, self.if_mc_bi))
+                mc_adata = pp.read(self.chunk_mc_binarized_dir + "/%s_mc%d_if_bi_%d_if_mc_bi_%d.h5ad" % (
+                self.data_name, i + 1, self.if_bi, self.if_mc_bi))
                 self.mc_adata = ad.concat([self.mc_adata, mc_adata])
                 del mc_adata
                 gc.collect()
@@ -366,15 +335,15 @@ class Carousel:
             except:
                 pass
 
-            # Save binarized metacell data.
+            # Save binarized metacell-by-region matrix.
             self.mc_adata.write(self.carousel_binarized_dir + '/%s_carousel_binarized.h5ad' % self.data_name)
         else:
             i = 0
-            self.mc_adata = pp.read(self.chunk_mc_dir + "/%s_chunk_%s_mc%d_if_bi_%d_if_mc_bi_%d.h5ad" % (
-            self.data_name, self.chunk_method, i + 1, self.if_bi, self.if_mc_bi))
+            self.mc_adata = pp.read(self.chunk_mc_dir + "/%s_mc%d_if_bi_%d_if_mc_bi_%d.h5ad" % (
+            self.data_name, i + 1, self.if_bi, self.if_mc_bi))
             for i in tqdm(range(1, self.fold_number)):
-                mc_adata = pp.read(self.chunk_mc_dir + "/%s_chunk_%s_mc%d_if_bi_%d_if_mc_bi_%d.h5ad" % (
-                self.data_name, self.chunk_method, i + 1, self.if_bi, self.if_mc_bi))
+                mc_adata = pp.read(self.chunk_mc_dir + "/%s_mc%d_if_bi_%d_if_mc_bi_%d.h5ad" % (
+                self.data_name, i + 1, self.if_bi, self.if_mc_bi))
                 self.mc_adata = ad.concat([self.mc_adata, mc_adata])
                 del mc_adata
                 gc.collect()
@@ -388,7 +357,7 @@ class Carousel:
             except:
                 pass
 
-            # Save unbinarized metacell data.
+            # Save unbinarized metacell-by-region matrix.
             self.mc_adata.write(self.carousel_dir + '/%s_carousel.h5ad' % self.data_name)
 
 
@@ -405,15 +374,11 @@ class Carousel:
         self.mc_sparsity = np.sum(self.mc_adata.X) / self.mc_adata.X.shape[0] / self.mc_adata.X.shape[1]
 
         self.mc_adata = pp.ATAC_preprocess(self.mc_adata,
-                                           transform=self.metacell_method,
                                            filter_rate=0.01 * (self.mc_sparsity / self.sparsity),
                                            method=neighbors_method,
-                                          decomposition=self.decomposition,
-                                          n_components=self.n_components,
-                                          svd_solver=self.svd_solver,
-                                          random_state=self.random_state,
-                                          n_iter=self.n_iter,
-                                          kernel=self.kernel)
+                                           n_components=self.n_components,
+                                           svd_solver=self.svd_solver
+                                           )
 
 #         self.mc_adata.write(self.carousel_preprocessed_dir + '/%s_carousel_pped.h5ad' % self.data_name)
         print(self.mc_adata)
@@ -450,7 +415,7 @@ class Carousel:
 #     @profile
     def result_comparison(self):
         """
-        Evaluation.
+        Evaluation using four clustering strategies.
         """
         cluster_name = ['Dleiden', 'Dlouvain', 'Cleiden', 'Clouvain']
         dwt = []

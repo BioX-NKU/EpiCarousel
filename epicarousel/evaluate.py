@@ -2,6 +2,9 @@ import pandas as pd
 import numpy as np
 
 def get_purity(obs, mc_adata, index, chunk_size):
+    """
+    Calculate the purity of each metacell.
+    """    
     purity_list = []
     for i in range(mc_adata.shape[0]):
         cell_list = mc_adata.obs['cells'][i].split()
@@ -11,13 +14,16 @@ def get_purity(obs, mc_adata, index, chunk_size):
     return purity_list
 
 def get_celltype(obs, mc_adata, index, chunk_size):
-    purity_list = []
+    """
+    Get the cell types of single cells contained in corresponding metacells.
+    """    
+    celltype_list = []
     for i in range(mc_adata.shape[0]):
         cell_list = mc_adata.obs['cells'][i].split()
         fold = int(mc_adata.obs['which_fold'][i])
         idx = [(int(item) + (fold-1) * chunk_size) for item in cell_list]
-        purity_list.append(pd.value_counts(obs[index][idx]).index.tolist()[0])
-    return purity_list
+        celltype_list.append(pd.value_counts(obs[index][idx]).index.tolist()[0])
+    return celltype_list
 
 def cluster_evaluation(adata_obs, label_key, cluster_key):
     '''

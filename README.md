@@ -15,8 +15,6 @@ git clone git://github.com/BioX-NKU/EpiCarousel.git
 cd EpiCarousel
 python setup.py install
 ```
-The dependencies will be automatically installed along with EpiCarousel.
-
 
 ## Quick Start
 
@@ -71,11 +69,12 @@ carousel.result_comparison()
 carousel.delete_dirs()
 
 # Load the metacell data as an AnnData object (adata).
+carousel.mc_adata
 ```
 
-## The source code for the reproduction of results can be found [here](https://github.com/BioX-NKU/EpiCarousel_reporducibility/).
+## The source code for the reproduction of results can be found [here](https://github.com/BioX-NKU/EpiCarousel/blob/main/run_epicarousel.py).
 
-## We also provide a [Jupyter Notebook]() for running EpiCarousel.
+## We also provide a [Jupyter Notebook](https://github.com/BioX-NKU/EpiCarousel/blob/main/EpiCarousel_vignette.ipynb) for running EpiCarousel.
 
 ## Find more details on [the Documentation of EpiCarousel]().
 

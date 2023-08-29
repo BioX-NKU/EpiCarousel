@@ -11,13 +11,12 @@ import gc
 warnings.filterwarnings("ignore")
 gc.collect()
 
-def metacell_construction(data_name, 
+def identify_metacells(data_name, 
                           K: int,
-                          chunk_dir: str,    # chunk_dir
-                          chunk_preprocessed_dir:str,    # chunk_preprocessed_dir
-                          chunk_mc_dir: str,  # mc_adata_K保存地址
-                          chunk_mc_binarized_dir: str, # 二值化后的mc_adata_K保存地址
-                          chunk_method: str = 'tfidf3',
+                          chunk_dir: str,    
+                          chunk_preprocessed_dir:str,    
+                          chunk_mc_dir: str, 
+                          chunk_mc_binarized_dir: str,
                           carousel_resolution: int = 10,
                           steps: int = 4,
                           if_bi: int = 1,
@@ -26,43 +25,38 @@ def metacell_construction(data_name,
                           threshold: float = 0.0,
                           filter_rate: float = 0.01,
                           neighbors_method: str = 'umap',
-                          decomposition: str = 'pca',
                           n_components: int = 50, 
-                          svd_solver: str = 'arpack',
-                          random_state: int = 1,
-                          n_iter: int = 7,
-                          kernel: str = 'linear'
+                          svd_solver: str = 'arpack'
                          ):
+    """
+    Identify metacells.
+    """
 
     adata = pp.read(chunk_dir + "/%s_fold%d.h5ad"%(data_name,K))
 
     adataX_origin = adata.X.copy()
-    adata = pp.ATAC_preprocess(adata, 
-                               filter_rate=filter_rate, 
-                               transform=chunk_method, 
+    adata = pp.ATAC_preprocess(adata,
+                               filter_rate=filter_rate,
                                if_bi=if_bi, 
-                               method=neighbors_method, 
-                               decomposition=decomposition,
-                              n_components=n_components,
-                              svd_solver=svd_solver,
-                              random_state=random_state,
-                              n_iter=n_iter,
-                              kernel=kernel)
+                               method=neighbors_method,
+                               n_components=n_components,
+                               svd_solver=svd_solver
+                               )
     print(adata)
-    adata.write(chunk_preprocessed_dir + '/%s_fold%d_%s_if_bi_%d.h5ad'%(data_name, K, chunk_method, if_bi))
+    adata.write(chunk_preprocessed_dir + '/%s_fold%d_if_bi_%d.h5ad'%(data_name, K, if_bi))
 
-    # graph constrution
+    # Graph constrution
     graph = ig.Graph.Weighted_Adjacency(adata.obsp['connectivities'],mode = 'undirected')
 
 
-    # walktrap
+    # Walktrap
     community = graph.community_walktrap(steps = steps, weights = graph.es.get_attribute_values('weight'))
     communities = community.as_clustering(n = int(adata.X.shape[0]/carousel_resolution))
 
     del adata
     gc.collect()
     
-    #metacell identification 
+    # Metacell identification 
     out = []
     if mc_mode == 'average':
         for group, idx in enumerate(communities):
@@ -86,7 +80,7 @@ def metacell_construction(data_name,
         dwt.append(str(community).replace(',','').replace('[','').replace(']',''))
     mc_adata.obs['cells'] = dwt
     if if_mc_bi == 0:    
-        mc_adata.write(chunk_mc_dir + "/%s_chunk_%s_mc%d_if_bi_%d_if_mc_bi_%d.h5ad"%(data_name, chunk_method,K, if_bi, if_mc_bi))
+        mc_adata.write(chunk_mc_dir + "/%s_mc%d_if_bi_%d_if_mc_bi_%d.h5ad"%(data_name,K, if_bi, if_mc_bi))
 
     if if_mc_bi == 1:
         if threshold == 0:
@@ -95,7 +89,7 @@ def metacell_construction(data_name,
             from sklearn.preprocessing import Binarizer
             binarizer = Binarizer(threshold=threshold)
             mc_adata.X = binarizer.transform(mc_adata.X).astype(np.int8)
-        mc_adata.write(chunk_mc_binarized_dir + "/%s_chunk_%s_mc%d_if_bi_%d_if_mc_bi_%d.h5ad" % (data_name, chunk_method, K, if_bi, if_mc_bi))
+        mc_adata.write(chunk_mc_binarized_dir + "/%s_mc%d_if_bi_%d_if_mc_bi_%d.h5ad" % (data_name, K, if_bi, if_mc_bi))
 
     del mc_adata
     gc.collect()
@@ -109,21 +103,16 @@ if __name__ == '__main__':
     chunk_preprocessed_dir = sys.argv[4]
     chunk_mc_dir = sys.argv[5]
     chunk_mc_binarized_dir = sys.argv[6]
-    chunk_method = sys.argv[7]
-    carousel_resolution = np.int(sys.argv[8])
-    steps = np.int(sys.argv[9])
-    if_bi = np.int(sys.argv[10])
-    if_mc_bi = np.int(sys.argv[11])
-    mc_mode = sys.argv[12]
-    threshold = np.float(sys.argv[13])
-    filter_rate = np.float(sys.argv[14])
-    neighbors_method = sys.argv[15]
-    decomposition = sys.argv[16]
-    n_components = np.int(sys.argv[17])
-    svd_solver = sys.argv[18]
-    random_state = np.int(sys.argv[19])
-    n_iter = np.int(sys.argv[20])
-    kernel = sys.argv[21]
+    carousel_resolution = np.int(sys.argv[7])
+    steps = np.int(sys.argv[8])
+    if_bi = np.int(sys.argv[9])
+    if_mc_bi = np.int(sys.argv[10])
+    mc_mode = sys.argv[11]
+    threshold = np.float(sys.argv[12])
+    filter_rate = np.float(sys.argv[13])
+    neighbors_method = sys.argv[14]
+    n_components = np.int(sys.argv[15])
+    svd_solver = sys.argv[16]
     
-    metacell_construction(data_name, K, chunk_dir, chunk_preprocessed_dir, chunk_mc_dir, chunk_mc_binarized_dir, chunk_method, carousel_resolution, steps, if_bi, if_mc_bi,mc_mode, threshold, filter_rate, neighbors_method, decomposition, n_components, svd_solver, random_state, n_iter, kernel)
+    identify_metacells(data_name, K, chunk_dir, chunk_preprocessed_dir, chunk_mc_dir, chunk_mc_binarized_dir, carousel_resolution, steps, if_bi, if_mc_bi,mc_mode, threshold, filter_rate, neighbors_method, n_components, svd_solver)
     
