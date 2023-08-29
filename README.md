@@ -73,7 +73,7 @@ carousel.delete_dirs()
 # Load the metacell data as an AnnData object (adata).
 ```
 
-## The source code for the reporduction of results can be found [here](https://github.com/BioX-NKU/EpiCarousel_reporducibility/).
+## The source code for the reproduction of results can be found [here](https://github.com/BioX-NKU/EpiCarousel_reporducibility/).
 
 ## We also provide a [Jupyter Notebook]() for running EpiCarousel.
 
