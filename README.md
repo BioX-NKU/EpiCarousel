@@ -36,7 +36,7 @@ python setup.py install
 
 ### Output
 
-+ adata: Metacell AnnData object of shape `n_obs` × `n_vars` stored in an h5ad file. Rows correspond to metacells and columns to features.
++ **adata**: Metacell AnnData object of shape `n_obs` × `n_vars` stored in an h5ad file. Rows correspond to metacells and columns to features.
 
 EpiCarousel can also be seamlessly integrated with [EpiScanpy](https://episcanpy.readthedocs.io/en/stable/), a widely-used Python library for epigenomics single cell analysis:
 
@@ -61,8 +61,8 @@ carousel = epicarousel.core.Carousel(data_name,
                                     )
 carousel.make_dirs()
 carousel.data_split()
-carousel.metacell_construction()
-carousel.merge_metacell()
+carousel.identify_metacells()
+carousel.merge_metacells()
 carousel.metacell_preprocess()
 carousel.metacell_data_clustering()
 carousel.result_comparison()
@@ -76,7 +76,7 @@ carousel.mc_adata
 
 ## We also provide a [Jupyter Notebook](https://github.com/BioX-NKU/EpiCarousel/blob/main/EpiCarousel_vignette.ipynb) for running EpiCarousel.
 
-## Find more details on [the Documentation of EpiCarousel]().
+## Find more details on [the Documentation of EpiCarousel](https://epicarousel.readthedocs.io/en/latest/).
 
 
 

@@ -1,0 +1,12 @@
+scanpy>=1.8.2
+snapatac2==2.2.0
+episcanpy==0.3.2
+anndata
+seaborn
+igraph
+leidenalg
+louvain
+shutilwhich
+memory_profiler
+scipy
+tqdm
