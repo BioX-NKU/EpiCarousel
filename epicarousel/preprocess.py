@@ -17,21 +17,6 @@ def read(filename,
         raise RuntimeError('Formal %s is invalid!' % formal)
     return adata
 
-
-# Perform TF-IDF (count_mat: peak*cell)
-def tfidf1(count_mat):
-    nfreqs = 1.0 * count_mat / np.tile(np.sum(count_mat, axis=0), (count_mat.shape[0],1))
-    tfidf_mat = np.multiply(nfreqs, np.tile(np.log(1 + 1.0 * count_mat.shape[1] / np.sum(count_mat,axis=1)).reshape(-1,1), (1,count_mat.shape[1])))
-    return csr_matrix(tfidf_mat)
-
-
-# Perform Signac TF-IDF (count_mat: peak*cell)
-def tfidf2(count_mat): 
-    tf_mat = 1.0 * count_mat / np.tile(np.sum(count_mat,axis=0), (count_mat.shape[0],1))
-    signac_mat = np.log(1 + np.multiply(1e4*tf_mat,  np.tile((1.0 * count_mat.shape[1] / np.sum(count_mat,axis=1)).reshape(-1,1), (1,count_mat.shape[1]))))
-    return csr_matrix(signac_mat)
-
-
 from sklearn.feature_extraction.text import TfidfTransformer
 def tfidf3(count_mat): 
     model = TfidfTransformer(smooth_idf=False, norm="l2")
@@ -39,26 +24,6 @@ def tfidf3(count_mat):
     model.idf_ -= 1
     tf_idf = np.transpose(model.transform(np.transpose(count_mat))).astype(np.float32)
     return csr_matrix(tf_idf)
-
-def tfidf22(adata, chunk_size=10000):
-    a = np.sum(adata.X, axis=0)
-    b = np.sum(adata.X, axis=1)
-    adata.X = adata.X / b
-    adata.X = adata.X / a
-    c = 1e4 * adata.X.shape[0]
-    c1, c2 = 1 / c, np.log(c)
-    ct = adata.X.shape[0]/chunk_size
-    if ct > 1:
-        ct = int(ct)
-        for i in range(ct):
-            adata.X[i*chunk_size:(i+1)*chunk_size] = np.log(c1 + adata.X[i*chunk_size:(i+1)*chunk_size])
-        adata.X[ct*chunk_size:] = np.log(c1 + adata.X[ct*chunk_size:])
-    else:
-        adata.X = np.log(c1 + adata.X)
-    adata.X = adata.X + c2
-    adata.X = csr_matrix(adata.X)
-    return adata
-
 
 def ATAC_preprocess(adata,
                     filter_rate=0.01,
@@ -74,20 +39,7 @@ def ATAC_preprocess(adata,
                     n_iter: int = 7,
                     kernel: str = 'linear'
       ):
-    '''
 
-    Args:
-        adata:
-        filter_rate:
-        transform:
-        n:
-        metric:
-        method: epi.pp.neighbors的默认method='gauss'
-        if_bi:
-
-    Returns:
-
-    '''
 
     if if_bi == 1:
         adata.X.data = np.ones(adata.X.data.shape[0], dtype = np.int8)

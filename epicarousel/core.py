@@ -84,31 +84,17 @@ def constrcution(fold_number: int,
     step : int
         Walktrap length.
     threads : int
-        _description_
+        Number of the processes.
     if_bi : int
-        _description_
+        Whether to binarize the scCAS data count matrix.
     if_mc_bi : int
-        _description_
+        Whether to binarize the metacell-by-region matrix. 
     mc_mode : str
-        _description_
+        Mode of calculating metacell-by-region matrix.
     threshold : float
-        _description_
+        Threshold for binarizing metacell-by-region matrix.
     filter_rate : float
-        _description_
-    neighbors_method : str
-        _description_
-    decomposition : str
-        _description_
-    n_components : int
-        _description_
-    svd_solver : str
-        _description_
-    random_state : int
-        _description_
-    n_iter : int
-        _description_
-    kernel : str
-        _description_
+        Proportion for feature selection.
     """    """"""        
     package_path = resource_filename('epicarousel', "")
     os.chmod(package_path + '/construction.sh', 0o755)
@@ -140,64 +126,6 @@ def constrcution(fold_number: int,
               + ' ' + str(n_iter)
               + ' ' + kernel
              )
-
-
-# @profile
-def consolidate_labels(atac_ad,
-                       atac_mc_ad,
-                       chunk_size):
-    # 赋mc标签
-    mc_label = ['carousel']
-    for s in mc_label:
-        label = atac_mc_ad.obs.index.tolist()
-        label.append('None')
-        dwt = ['None'] * atac_ad.shape[0]
-        dwt = pd.Categorical(dwt, categories=label)
-        atac_ad.obs['%s' % s] = dwt
-        for i in range(atac_mc_ad.shape[0]):
-            fold = atac_mc_ad.obs['which_fold'][i]
-            cell_list = atac_mc_ad.obs['cells'][i].split(' ')
-            cell_list = [(int(item) + (fold - 1) * chunk_size) for item in cell_list]
-            atac_ad.obs['%s' % s][cell_list] = atac_mc_ad.obs.index[i]
-        atac_ad.obs['%s' % s] = pd.Categorical(atac_ad.obs['%s' % s],
-                                               categories=list(atac_ad.obs['%s' % s].unique()))
-    # atac_ad.obs['carousel']
-
-    # 赋mc聚类标签
-    cluster_name = ['Dleiden', 'Dlouvain', 'Cleiden', 'Clouvain']
-    for s in cluster_name:
-        cluster_label = atac_mc_ad.obs[s].cat.categories.tolist()
-        cluster_label.append('None')
-        dwt = ['None'] * atac_ad.shape[0]
-        dwt = pd.Categorical(dwt, categories=cluster_label)
-        atac_ad.obs['mc_%s' % s] = dwt
-        for i in range(atac_mc_ad.shape[0]):
-            fold = atac_mc_ad.obs['which_fold'][i]
-            cell_list = atac_mc_ad.obs['cells'][i].split(' ')
-            cell_list = [(int(item) + (fold - 1) * chunk_size) for item in cell_list]
-            atac_ad.obs['mc_%s' % s][cell_list] = atac_mc_ad.obs[s][i]
-        atac_ad.obs['mc_%s' % s] = pd.Categorical(atac_ad.obs['mc_%s' % s],
-                                                  categories=list(atac_ad.obs['mc_%s' % s].unique()))
-    # atac_ad.obs[['mc_Dleiden', 'mc_Dlouvain', 'mc_Cleiden', 'mc_Clouvain']]
-
-    # 赋fold标签
-    mc_label = ['which_fold']
-    for s in mc_label:
-        label = list(atac_mc_ad.obs['which_fold'].unique())
-        label.append('None')
-        dwt = ['None'] * atac_ad.shape[0]
-        dwt = pd.Categorical(dwt, categories=label)
-        atac_ad.obs[s] = dwt
-        for i in range(atac_mc_ad.shape[0]):
-            fold = atac_mc_ad.obs['which_fold'][i]
-            cell_list = atac_mc_ad.obs['cells'][i].split(' ')
-            cell_list = [(int(item) + (fold - 1) * chunk_size) for item in cell_list]
-            atac_ad.obs[s][cell_list] = atac_mc_ad.obs['which_fold'][i]
-        atac_ad.obs[s] = pd.Categorical(atac_ad.obs[s], categories=list(atac_ad.obs[s].unique()))
-    # atac_ad.obs['which_fold']
-
-    return atac_ad
-
 
 class Carousel:
 
@@ -231,28 +159,21 @@ class Carousel:
         '''
 
         Args:
-            data_name: The name of data.
-            data_dir: The path where the data is saved.
+            data_name: Name of data.
+            data_dir: Path where the data is saved.
             if_bi: int, whether the original data is binarized, 1 represents binarization
                 and other numbers represent no binarization
             if_mc_bi: int, whether metacell count matrix is binared, 1 represents binarization
                         and other numbers represent no binarization
             threshold: float, the threshold for metacell count matrix
-            filter_cells:
             filter_rate: min_cells=np.ceil(filter_rate*adata.shape[0])
-            chunk_size:
-            original_method:
-            chunk_method:
-            carousel_method:
-            carousel_resolution:
-            base:
-            shuffle:
-            random_state:
-            step:
-            threads:
-            index:
-            mc_mode:
-            neighbors_method:
+            chunk_size: Number of cells in each chunk.
+            carousel_resolution: Ratio of the number of cells to that of metacells.
+            base: Export path for EpiCarousel.
+            step: Length of Walktrap community detection.
+            threads: Number of parallel processes.
+            index: (Optional) Ground truth cell type label of single cells for downstream analysis and evaluation.
+            mc_mode: Mode of calculating metacell-by-region matrix.
         '''
         self.data_name = data_name
         self.filter_cells = filter_cells
@@ -312,14 +233,10 @@ class Carousel:
 #     @profile
     def make_dirs(self):
         '''
-
+        # Create output directories.
 
         '''
-        self.proj_dir = self.base + '/' + self.data_name + '/' + str(self.chunk_size) + '_is_bi_' + str(
-            self.if_bi) + '_' + self.chunk_method + '_' + '_steps' + str(self.step) + '_resolution_' + str(
-            self.carousel_resolution) + '_mc_mode_' + self.mc_mode + '_if_mc_bi_' + str(
-            self.if_mc_bi) + '_threshold_' + str(
-            self.threshold) + '_' + self.metacell_method + '_' + self.neighbors_method + '_export'
+        self.proj_dir = self.base + '/EpiCarousel_export'
         print("Project output directory: %s" % self.proj_dir)
         self.sf_dir = self.proj_dir + '/shuffled'
         self.chunk_dir = self.proj_dir + '/chunk'
@@ -328,9 +245,9 @@ class Carousel:
         self.chunk_mc_binarized_dir = self.proj_dir + '/chunk_mc_binarized'
         self.carousel_dir = self.proj_dir + '/carousel'
         self.carousel_binarized_dir = self.proj_dir + '/carousel_binarized'
-        self.carousel_preprocessed_dir = self.proj_dir + '/carousel_pped'
+        self.carousel_preprocessed_dir = self.proj_dir + '/carousel_preprocessed'
         self.carousel_clustered_dir = self.proj_dir + '/carousel_clustered'
-        self.result_dir = self.proj_dir + '/carousel_clustering_performance'
+        self.result_dir = self.proj_dir + '/carousel_clustering_results'
 
         self.dirs = [self.proj_dir, self.sf_dir, self.chunk_dir, self.chunk_preprocessed_dir, self.chunk_mc_dir,
                      self.chunk_mc_binarized_dir, self.carousel_dir, self.carousel_binarized_dir,
@@ -341,7 +258,9 @@ class Carousel:
 
 #     @profile
     def shuffle_data(self):
-
+        """
+        Shuffle the initial data.
+        """
         print("Start shuffling data!")
         if not os.path.exists(self.sf_dir + '/%s_sf_%d.h5ad' % (self.data_name, self.random_state)):
             adata = pp.read(self.data_dir)
@@ -353,8 +272,10 @@ class Carousel:
 
 #     @profile
     def data_split(self):
-
-        print("Start data_split!")
+        """
+        Partition data sequentially into chunks.
+        """
+        print("Start spliting data!")
         if self.shuffle == 1:
             snap_adata = pp.read(self.sf_dir + '/%s_sf_%s.h5ad' % (self.data_name, str(self.random_state)),
                                  formal='lazily')
@@ -387,47 +308,13 @@ class Carousel:
         snap_adata.close()
         del origin_sum
         gc.collect()
-        print("Finish data_split!")
-
-#     @profile
-    def original_data_read(self):
-
-        if self.shuffle:
-            self.adata = pp.read(self.sf_dir + '/%s_sf_%d.h5ad' % (self.data_name, self.random_state))
-        else:
-            self.adata = pp.read(self.data_dir)
-
-    @profile
-    def original_data_preprocess(self, method='umap'):
-
-        self.adata = pp.ATAC_preprocess(self.adata,
-                                        filter_rate=0.01,
-                                        transform=self.original_method,
-                                        n=15,
-                                        metric='euclidean',
-                                        method=method,
-                                        if_bi=0
-                                        )
-
-#     @profile
-    def original_data_clustering(self):
-
-        epi.tl.leiden(self.adata, key_added='Dleiden')
-
-        epi.tl.louvain(self.adata, key_added='Dlouvain')
-
-        epi.tl.getNClusters(self.adata, n_cluster=self.adata.obs[self.index].nunique(), method='leiden')
-        self.adata.obs['Cleiden'] = self.adata.obs['leiden'].copy()
-
-        epi.tl.getNClusters(self.adata, n_cluster=self.adata.obs[self.index].nunique(), method='louvain')
-        self.adata.obs['Clouvain'] = self.adata.obs['louvain'].copy()
-
-        # del self.adata
-        gc.collect()
+        print("Finish spliting data.")
 
 #     @profile
     def metacell_construction(self):
-
+        """
+        Identify metacells.
+        """
         constrcution(fold_number=self.fold_number,
                      data_name=self.data_name,
                      chunk_dir=self.chunk_dir,
@@ -455,11 +342,10 @@ class Carousel:
 #     @profile
     def merge_metacell(self):
         '''
-        merge metacell chunks
-
+        Aggregate metacells from each chunk.
         '''
 
-        print("Start merging metacells.")
+        print("Start aggregating metacells.")
         if self.if_mc_bi == 1:
             i = 0
             self.mc_adata = pp.read(self.chunk_mc_binarized_dir + "/%s_chunk_%s_mc%d_if_bi_%d_if_mc_bi_%d.h5ad" % (
@@ -472,7 +358,7 @@ class Carousel:
                 gc.collect()
 
             self.mc_adata.obs_names_make_unique()
-            print("Finish merging metacells.")
+            print("Finish aggregating metacells.")
             try:
                 for varname in self.var[:].columns:
                     self.mc_adata.var[varname] = pd.Categorical(self.var[varname])
@@ -494,7 +380,7 @@ class Carousel:
                 gc.collect()
 
             self.mc_adata.obs_names_make_unique()
-            print("Finish merging metacells.")
+            print("Finish aggregating metacells.")
             try:
                 for varname in self.var[:].columns:
                     self.mc_adata.var[varname] = pd.Categorical(self.var[varname])
@@ -510,16 +396,11 @@ class Carousel:
     def metacell_preprocess(self,
                            neighbors_method: str = 'umap'
                            ):
-        '''
+        """
+        Preprocess metacells.
+        """        
 
-        Args:
-            neighbors_method:
-
-        Returns:
-
-        '''
-
-        print("Start metacell preprocessing!")
+        print("Start metacell preprocessing.")
 
         self.mc_sparsity = np.sum(self.mc_adata.X) / self.mc_adata.X.shape[0] / self.mc_adata.X.shape[1]
 
@@ -536,12 +417,15 @@ class Carousel:
 
 #         self.mc_adata.write(self.carousel_preprocessed_dir + '/%s_carousel_pped.h5ad' % self.data_name)
         print(self.mc_adata)
-        print("Finish metacell preprocessing!")
+        print("Finish metacell preprocessing.")
 
 #     @profile
     def metacell_data_clustering(self):
+        """
+        Cluster metacells.
+        """        
 
-        print("Start metacell clustering!")
+        print("Start metacell clustering.")
         print(self.obs)
         epi.tl.leiden(self.mc_adata, key_added='Dleiden')
         epi.tl.louvain(self.mc_adata, key_added='Dlouvain')
@@ -551,21 +435,23 @@ class Carousel:
 
         epi.tl.getNClusters(self.mc_adata, n_cluster=len(self.obs[self.index].unique()), method='louvain')
         self.mc_adata.obs['Clouvain'] = self.mc_adata.obs['louvain'].copy()
-        print("Finish metacell clustering!")
+        print("Finish metacell clustering.")
 #         self.mc_adata.write(self.carousel_clustered_dir + '/%s_carousel_clustered.h5ad' % self.data_name)
 
 #     @profile
     def delete_dirs(self):
-        '''
-        删去文件和文件夹
-        '''
-        for direc in [self.chunk_dir, self.chunk_preprocessed_dir, self.chunk_mc_dir, self.chunk_mc_binarized_dir,
-                      self.carousel_preprocessed_dir, self.carousel_clustered_dir]:
+        """
+        Remove intermediate files.
+        """        
+        for direc in [self.sf_dir, self.chunk_dir, self.chunk_preprocessed_dir, self.chunk_mc_dir,
+                      self.chunk_mc_binarized_dir,self.carousel_clustered_dir]:
             rmtree(direc)
 
 #     @profile
     def result_comparison(self):
-
+        """
+        Evaluation.
+        """
         cluster_name = ['Dleiden', 'Dlouvain', 'Cleiden', 'Clouvain']
         dwt = []
         # for i in range(self.adata.X.shape[0]):
@@ -584,14 +470,14 @@ class Carousel:
             for s in cluster_name:
                 self.obs['mc_%s' % s][cell_list] = self.mc_adata.obs['%s' % s][i]
 
-        cluster_index = ['AMI_Dlouvain', 'ARI_Dlouvain', 'NMI_Dlouvain', 'HOM_Dlouvain', 'COM_Dlouvain', 'Vms_Dlouvain',
-                         'FMS_Dlouvain',
-                         'AMI_Dleiden', 'ARI_Dleiden', 'NMI_Dleiden', 'HOM_Dleiden', 'COM_Dleiden', 'Vms_Dleiden',
-                         'FMS_Dleiden',
-                         'AMI_Clouvain', 'ARI_Clouvain', 'NMI_Clouvain', 'HOM_Clouvain', 'COM_Clouvain', 'Vms_Clouvain',
-                         'FMS_Clouvain',
-                         'AMI_Cleiden', 'ARI_Cleiden', 'NMI_Cleiden', 'HOM_Cleiden', 'COM_Cleiden', 'Vms_Cleiden',
-                         'FMS_Cleiden',
+        cluster_index = ['AMI_Dlouvain', 'ARI_Dlouvain', 'NMI_Dlouvain', 'Homo_Dlouvain', 'CS_Dlouvain', 'Vms_Dlouvain',
+                         'FMI_Dlouvain',
+                         'AMI_Dleiden', 'ARI_Dleiden', 'NMI_Dleiden', 'Homo_Dleiden', 'CS_Dleiden', 'Vms_Dleiden',
+                         'FMI_Dleiden',
+                         'AMI_Clouvain', 'ARI_Clouvain', 'NMI_Clouvain', 'Homo_Clouvain', 'CS_Clouvain', 'Vms_Clouvain',
+                         'FMI_Clouvain',
+                         'AMI_Cleiden', 'ARI_Cleiden', 'NMI_Cleiden', 'Homo_Cleiden', 'CS_Cleiden', 'Vms_Cleiden',
+                         'FMI_Cleiden',
                          'origin_sparsity', 'carousel_sparsity', 'C-o_sparsity', 'C/o_sparsity']
         self.result = pd.DataFrame(index=range(1), columns=cluster_index, dtype=float)
         self.res = list(
