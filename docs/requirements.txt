@@ -1,5 +1,5 @@
 scanpy>=1.8.2
-snapatac2==2.2.0
+snapatac2>=2.2.0
 episcanpy==0.3.2
 anndata
 seaborn
@@ -9,4 +9,7 @@ louvain
 shutilwhich
 memory_profiler
 scipy
+sphinx_autodoc_typehints
+nbsphinx
+sphinx_rtd_theme
 tqdm
