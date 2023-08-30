@@ -16,7 +16,7 @@ import sys
 import sphinx_rtd_theme
 sys.path.insert(0, os.path.abspath(__file__+'../../../..'))
 
-import epiaster
+import epicarousel
 # -- Project information -----------------------------------------------------
 
 project = 'EpiCarousel'
@@ -32,7 +32,8 @@ author = 'BioX-NKU'
 extensions = ['sphinx.ext.autosummary',
     'sphinx_autodoc_typehints',
     'sphinx.ext.napoleon',
-    'nbsphinx'
+    'nbsphinx',
+    'sphinx_rtd_theme'
 ]
 
 # Generate the API documentation when building

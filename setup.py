@@ -6,7 +6,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="epicarousel",
-    version="0.0.1",
+    version="0.0.2",
     keywords=("pip", "epicarousel"),
     description="EpiCarousel: memory- and time-efficient identification of metacells for atlas-level single-cell chromatin accessibility data",
     long_description="EpiCarousel provides an memory- and time-efficient way to identify metacells of atlas-level single-cell chromatin accessibility sequencing data for downstream analysis. We provide documentation in the form of functional application programming interface documentation, tutorials and example workflows. All EpiCarousel wheels distributed on PyPI are MIT licensed.",
@@ -27,7 +27,7 @@ setup(
     install_requires=[
         "scanpy>=1.8.2",
         "anndata==0.8.0",
-        "snapatac2>=2.1.0",
+        "snapatac2>=2.2.0",
         "episcanpy==0.3.2",
         "seaborn",
         "igraph",

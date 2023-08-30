@@ -11,7 +11,7 @@
    :target: https://pepy.tech/project/epicarousel
    
 
-EpiCarousel: memory- and time-efficient identification of metacells for atlas-level single-cell chromatin acces-sibility data
+EpiCarousel: memory- and time-efficient identification of metacells for atlas-level single-cell chromatin accessibility data
 ----------------
 
 

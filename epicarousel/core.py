@@ -140,21 +140,31 @@ class Carousel:
         '''
 
         Args:
-            data_name: Name of data.
-            data_dir: Path where the data is saved.
-            if_bi: int, whether the original data is binarized, 1 represents binarization
-                and other numbers represent no binarization
-            if_mc_bi: int, whether metacell count matrix is binared, 1 represents binarization
-                        and other numbers represent no binarization
-            threshold: float, the threshold for metacell count matrix
-            filter_rate: min_cells=np.ceil(filter_rate*adata.shape[0])
-            chunk_size: Number of cells in each chunk.
-            carousel_resolution: Ratio of the number of cells to that of metacells.
-            base: Export path for EpiCarousel.
-            step: Length of Walktrap community detection.
-            threads: Number of parallel processes.
-            index: (Optional) Ground truth cell type label of single cells for downstream analysis and evaluation.
-            mc_mode: Mode of calculating metacell-by-region matrix.
+            **data_name**: Name of data.
+
+            **data_dir**: Path of an h5ad file where the scCAS data count matrix is stored in the compressed sparse row format. AnnData object of shape ``n_obs`` × ``n_vars``. Rows correspond to cells and columns to peaks/regions.
+
+            **if_bi**: Whether to binarize the scCAS data count matrix.
+
+            **if_mc_bi**: Whether to binarize the metacell-by-region matrix. 
+
+            **threshold**: Threshold for binarizing metacell-by-region matrix.
+
+            **filter_rate**: Proportion for feature selection.
+
+            **chunk_size**:  Number of cells in each chunk.
+
+            **carousel_resolution**: Ratio of the number of cells to that of metacells.
+            
+            **base**: Export path for EpiCarousel.
+
+            **step**: Length of Walktrap community detection.
+
+            **threads**: Number of parallel processes.
+
+            **mc_mode**: Mode of calculating metacell-by-region matrix.
+
+            **index**: (Optional) Ground truth cell type label of single cells for downstream analysis and evaluation.
         '''
         self.data_name = data_name
         self.chunk_size = chunk_size

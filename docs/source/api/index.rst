@@ -52,7 +52,6 @@ Metacell aggregation
     :toctree: .
 
     core.Carousel.merge_metacells
-    core.Carousel.data_split
 
 Downstream analysis
 -----------
